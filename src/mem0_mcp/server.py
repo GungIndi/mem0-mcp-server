@@ -5,11 +5,11 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 
 from . import auth, client
 
-mcp = FastMCP("mem0", transport_security=TransportSecuritySettings(allowed_hosts=["*"]))
+mcp = FastMCP("mem0", transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False))
 
 _current_key: contextvars.ContextVar[auth.ApiKey | None] = contextvars.ContextVar("current_key", default=None)
 
@@ -18,7 +18,8 @@ _current_key: contextvars.ContextVar[auth.ApiKey | None] = contextvars.ContextVa
 
 class BearerAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.url.path == "/health":
+        path = request.url.path
+        if not path.startswith("/mcp"):
             return await call_next(request)
         header = request.headers.get("Authorization", "")
         token = header.removeprefix("Bearer ").strip()
@@ -137,6 +138,29 @@ def main() -> None:
         app = mcp.streamable_http_app()
         app.add_middleware(BearerAuthMiddleware)
         app.add_route("/health", lambda r: Response("OK", status_code=200, media_type="text/plain"))
+
+        async def _protected_resource(r):
+            base = f"{r.url.scheme}://{r.url.netloc}"
+            return JSONResponse({
+                "resource": f"{base}/mcp",
+                "authorization_servers": [],
+                "bearer_methods_supported": ["header"],
+            }, status_code=200)
+
+        async def _oauth_stub(r):
+            return JSONResponse({"error": "not_supported"}, status_code=404)
+
+        app.add_route("/.well-known/oauth-protected-resource", _protected_resource, methods=["GET"])
+        app.add_route("/.well-known/oauth-protected-resource/mcp", _protected_resource, methods=["GET"])
+        for p in [
+            "/.well-known/oauth-authorization-server",
+            "/.well-known/oauth-authorization-server/mcp",
+            "/.well-known/openid-configuration",
+            "/.well-known/openid-configuration/mcp",
+            "/mcp/.well-known/openid-configuration",
+            "/register",
+        ]:
+            app.add_route(p, _oauth_stub, methods=["GET", "POST"])
         import uvicorn
         uvicorn.run(app, host="0.0.0.0", port=port)
 
