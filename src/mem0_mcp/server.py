@@ -2,13 +2,14 @@ import contextvars
 import os
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
 from . import auth, client
 
-mcp = FastMCP("mem0")
+mcp = FastMCP("mem0", transport_security=TransportSecuritySettings(allowed_hosts=["*"]))
 
 _current_key: contextvars.ContextVar[auth.ApiKey | None] = contextvars.ContextVar("current_key", default=None)
 
@@ -133,7 +134,7 @@ def main() -> None:
         mcp.run(transport="stdio")
     else:
         port = int(os.getenv("MEM0_MCP_PORT", "6969"))
-        app = mcp.streamable_http_app(allowed_hosts=["*"])
+        app = mcp.streamable_http_app()
         app.add_middleware(BearerAuthMiddleware)
         app.add_route("/health", lambda r: Response("OK", status_code=200, media_type="text/plain"))
         import uvicorn
