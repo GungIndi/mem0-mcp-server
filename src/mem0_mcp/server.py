@@ -17,6 +17,8 @@ _current_key: contextvars.ContextVar[auth.ApiKey | None] = contextvars.ContextVa
 
 class BearerAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        if request.url.path == "/health":
+            return await call_next(request)
         header = request.headers.get("Authorization", "")
         token = header.removeprefix("Bearer ").strip()
         key = auth.resolve(token)
@@ -131,8 +133,9 @@ def main() -> None:
         mcp.run(transport="stdio")
     else:
         port = int(os.getenv("MEM0_MCP_PORT", "6969"))
-        app = mcp.streamable_http_app()
+        app = mcp.streamable_http_app(allowed_hosts=["*"])
         app.add_middleware(BearerAuthMiddleware)
+        app.add_route("/health", lambda r: Response("OK", status_code=200, media_type="text/plain"))
         import uvicorn
         uvicorn.run(app, host="0.0.0.0", port=port)
 

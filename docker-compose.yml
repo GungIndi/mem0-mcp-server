@@ -16,7 +16,7 @@ services:
       - MEM0_MCP_TRANSPORT=http
       - MEM0_KEYS_DB=/data/mem0_keys.db
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6969/mcp"]
+      test: ["CMD", "curl", "-f", "http://localhost:6969/health"]
       interval: 30s
       timeout: 10s
       retries: 3
