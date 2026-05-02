@@ -50,3 +50,10 @@ list_api_keys()
 ```
 
 Tokens are shown in full — treat output as sensitive.
+
+## Best practices
+
+- **Admin keys are for management, not personal storage** — always pass explicit `user_id` when using admin keys for memory operations
+- **Never store memories under system accounts** (e.g., `bootstrap-admin`) — creates junk data
+- **Create a personal user key for your own memories** — use admin key only for: provisioning access, auditing, inspecting other users
+- **When inspecting user memories with admin key**, always specify target `user_id`: `search_memories(query="...", user_id="target-user")`

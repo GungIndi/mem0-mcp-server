@@ -51,11 +51,14 @@ Do NOT save:
 - Information already likely in memory (search first)
 
 ```
-add_memory(content="User is allergic to peanuts")
-add_memory(content="User prefers dark mode in all editors")
+add_memory(content="System uses event-driven architecture with Redis pub/sub")
+add_memory(content="Code style: snake_case for variables, PascalCase for classes")
+add_memory(content="Post-mortem: outage caused by missing DB index on user_id")
+add_memory(content="Project uses PostgreSQL as primary database, Redis for cache")
+add_memory(content="Prefer async/await over callbacks for readability")
 ```
 
-One fact per call. Be specific — "User prefers vim keybindings" not "editor stuff".
+One fact per call. Be specific and direct — the AI should judge what's worth remembering based on context.
 
 ## user_id scoping
 

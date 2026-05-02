@@ -69,23 +69,14 @@ success "Package installed."
 # ── bootstrap DB (stdio: generate initial admin key) ─────────────────────────
 if [[ "$TRANSPORT" == "stdio" ]]; then
   info "Initialising key store at $DB_PATH ..."
-  BOOTSTRAP_KEY=$(MEM0_KEYS_DB="$DB_PATH" MEM0_BASE_URL="$MEM0_URL" MEM0_MCP_TRANSPORT=stdio \
+  ADMIN_KEY=$(MEM0_KEYS_DB="$DB_PATH" MEM0_BASE_URL="$MEM0_URL" MEM0_MCP_TRANSPORT=stdio \
     python3 -c "
 import sys; sys.path.insert(0, '$REPO_DIR/src')
 from mem0_mcp import auth
-auth.DB_PATH = '$DB_PATH'
 auth.init_db()
 keys = auth.list_keys()
 print(keys[0].token)
-" 2>&1 | grep -v '^\[mem0-mcp\].*Bootstrap' || true)
-  # re-run to capture the printed key if it was just generated
-  ADMIN_KEY=$(MEM0_KEYS_DB="$DB_PATH" python3 -c "
-import sys; sys.path.insert(0, '$REPO_DIR/src')
-from mem0_mcp import auth
-auth.DB_PATH = '$DB_PATH'
-keys = auth.list_keys()
-print(keys[0].token)
-")
+" 2>&1)
   success "Admin key: $ADMIN_KEY"
 fi
 
@@ -191,8 +182,9 @@ if [[ "$SKIP_SKILL" -eq 0 ]]; then
 <!-- mem0-mcp -->
 ## Memory (mem0)
 
-- **Search first**: before answering personal or contextual questions, call `search_memories` to check for relevant past context.
-- **Save selectively**: only add to memory when the user explicitly asks ("remember this", "don't forget") or the fact is clearly persistent (name, allergy, strong preference, recurring pattern). Do not save temporary task context.
+- **Search first**: before answering contextual questions, call `search_memories` to check for relevant past context.
+- **Save selectively**: only add to memory when the user explicitly asks ("remember this", "don't forget") or the fact is clearly persistent (architecture decisions, code style preferences, post-mortems, tech stack, project context). Do not save temporary task context.
+- **Admin keys**: always pass explicit `user_id` for memory operations. Never store under system accounts. Create a personal user key for your own memories.
 - Skills: `mem0-memory` for memory ops, `mem0-admin` for key management.
 <!-- /mem0-mcp -->
 EOF

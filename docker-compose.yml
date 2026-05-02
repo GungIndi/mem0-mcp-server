@@ -1,0 +1,23 @@
+services:
+  mem0-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mem0-mcp
+    restart: unless-stopped
+    ports:
+      - "6969:6969"
+    volumes:
+      - ./data:/data
+    env_file:
+      - .env
+    environment:
+      - MEM0_MCP_PORT=6969
+      - MEM0_MCP_TRANSPORT=http
+      - MEM0_KEYS_DB=/data/mem0_keys.db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6969/mcp"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

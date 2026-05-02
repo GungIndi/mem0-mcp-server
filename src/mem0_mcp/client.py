@@ -5,7 +5,7 @@ import httpx
 _BASE_URL = os.getenv("MEM0_BASE_URL", "http://localhost:8000").rstrip("/")
 _API_KEY = os.getenv("MEM0_API_KEY", "")
 
-_headers = {"Authorization": f"Bearer {_API_KEY}"} if _API_KEY else {}
+_headers = {"X-Api-Key": _API_KEY} if _API_KEY else {}
 _client = httpx.Client(base_url=_BASE_URL, headers=_headers, timeout=30)
 
 
